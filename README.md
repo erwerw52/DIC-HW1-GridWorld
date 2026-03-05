@@ -70,7 +70,7 @@ pip install streamlit
 streamlit run app.py
 ```
 
-開啟瀏覽器前往 `[https://dic-hw1-gridworld-bbpvypvztaecm4mbzcg6fm.streamlit.app](https://dic-hw1-gridworld-bbpvypvztaecm4mbzcg6fm.streamlit.app)` 即可使用。
+開啟瀏覽器前往 [https://dic-hw1-gridworld-bbpvypvztaecm4mbzcg6fm.streamlit.app](https://dic-hw1-gridworld-bbpvypvztaecm4mbzcg6fm.streamlit.app) 即可使用。
 
 ---
 
