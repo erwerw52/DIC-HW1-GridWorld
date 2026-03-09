@@ -162,7 +162,7 @@ def main():
     st.title("🚜 歡樂農場尋寶記 🌻")
     st.markdown("##### 🐶 找出回到溫暖小屋的最佳路徑！")
 
-    n = st.selectbox("▸ 🌾 請選擇你的農場大小 n（5–9）", list(range(5, 10)), index=0)
+    n = st.selectbox("▸ 🌾 請選擇你的農場大小 n（3–9）", list(range(3, 10)), index=0)
 
     if 'grid_n' not in st.session_state or st.session_state.grid_n != n:
         init_state(n)
