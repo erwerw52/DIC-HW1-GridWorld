@@ -120,13 +120,23 @@ def build_css():
     .stApp {
         background-color: #fdfbf7;
     }
+
+    /* ── 壓縮 Streamlit 預設頂部 padding，讓內容不需捲動 ── */
+    .block-container {
+        padding-top: 0.6rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+
+    /* ── 標題縮緊邊距 ── */
+    h1 { margin-top: 0 !important; margin-bottom: 0.15rem !important; font-size: 1.7rem !important; }
+    h5 { margin-top: 0 !important; margin-bottom: 0.2rem !important; }
     
     /* ── 網格格子按鈕：正方形、草地風格 ── */
     [class*="st-key-cell_"] button {
         aspect-ratio: 1 / 1 !important;
-        width: 100% !important;
-        height: auto !important;
-        font-size: 40px !important;
+        width: 90% !important;
+        height: 80px !important;
+        font-size: 30px !important;
         font-weight: bold;
         border-radius: 14px;
         border: 2px solid #a3c9a8;
@@ -134,10 +144,10 @@ def build_css():
         color: #4a5d23;
         transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
         box-shadow: 2px 2px 6px rgba(100,140,80,0.12);
-        line-height: 1.4;
+        line-height: 1.1;
     }
     [class*="st-key-cell_"] button p {
-        font-size: 32px !important;
+        font-size: 24px !important;
         line-height: 1.2 !important;
         margin: 0 !important;
         color: inherit !important;
@@ -153,8 +163,8 @@ def build_css():
     /* ── 導航計算按鈕：橫幅、同色系綠金農場風格 ── */
     [class*="st-key-calc_btn"] button {
         width: 100% !important;
-        height: 52px !important;
-        font-size: 18px;
+        height: 44px !important;
+        font-size: 15px !important;
         font-weight: bold;
         border-radius: 10px;
         letter-spacing: 0.05em;
@@ -172,17 +182,95 @@ def build_css():
     
     /* 調整列之間的間距以讓網格更緊湊 */
     [data-testid="column"] {
-        padding: 0px 4px;
+        padding: 0px 0px;
     }
     
-    /* 調整垂直間隔，讓它與水平 gap="small" 的間距接近 */
+    /* 調整垂直間隔 */
     [data-testid="stVerticalBlock"] {
-        gap: 0.5rem !important;
+        gap: 0.25rem !important;
     }
     
     /* 標題與文字顏色設定 */
     h1, h2, h3, h4, h5, h6, p {
         color: #5c4a3d !important;
+    }
+
+    /* ── 右側玩法說明面板 ── */
+    .guide-panel {
+        background: linear-gradient(160deg, #fffdf5 0%, #f5f0e8 100%);
+        border: 2px solid #c8dfc4;
+        border-radius: 18px;
+        padding: 20px 18px 24px 18px;
+        box-shadow: 3px 4px 16px rgba(120,160,100,0.13);
+        font-family: inherit;
+    }
+    .guide-panel-title {
+        font-size: 18px;
+        font-weight: 800;
+        color: #4a5d23 !important;
+        letter-spacing: 0.04em;
+        margin-bottom: 14px;
+        border-bottom: 2px dashed #c8dfc4;
+        padding-bottom: 8px;
+    }
+    .guide-section {
+        font-size: 13px;
+        font-weight: 700;
+        color: #7a5c3a !important;
+        margin: 14px 0 8px 0;
+        letter-spacing: 0.05em;
+    }
+    .guide-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .step-num {
+        min-width: 24px;
+        height: 24px;
+        background-color: #5a8a50;
+        color: #fff;
+        border-radius: 50%;
+        font-size: 12px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+    .step-text {
+        font-size: 13px;
+        color: #5c4a3d !important;
+        line-height: 1.6;
+    }
+    .guide-divider {
+        border: none;
+        border-top: 1px dashed #d4c9b8;
+        margin: 14px 0;
+    }
+    .legend-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 7px;
+        font-size: 13px;
+        color: #5c4a3d !important;
+    }
+    .legend-icon {
+        font-size: 18px;
+        width: 26px;
+        text-align: center;
+    }
+    .path-badge {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        background-color: #7cfc00;
+        border: 2px solid #081c15;
+        border-radius: 4px;
+        vertical-align: middle;
     }
     </style>
     """
@@ -217,92 +305,148 @@ def build_path_css(path):
 
 
 def main():
-    st.set_page_config(page_title="Happy Farm Strategy", page_icon="🌻", layout="centered")
+    st.set_page_config(page_title="Happy Farm Strategy", page_icon="🌻", layout="wide")
     st.markdown(build_css(), unsafe_allow_html=True)
     
     st.title("🚜 歡樂農場尋寶記 🌻")
     st.markdown("##### 🐶 找出回到溫暖小屋的最佳路徑！")
 
-    n = st.selectbox("▸ 🌾 請選擇你的農場大小 n（3–9）", list(range(3, 10)), index=0)
+    # ── 主要雙欄佈局：左側農場（4）、右側玩法說明（1） ──
+    col_main, col_guide = st.columns([3, 1], gap="large")
 
-    if 'grid_n' not in st.session_state or st.session_state.grid_n != n:
-        init_state(n)
+    with col_main:
+        n = st.selectbox("▸ 🌾 請選擇你的農場大小 n（3–9）", list(range(3, 10)), index=0)
 
-    # 注入路徑格子的動態 CSS（需在 init_state 之後，確保 path 已存在）
-    if 'path' not in st.session_state:
-        st.session_state.path = set()
-    st.markdown(build_path_css(st.session_state.path), unsafe_allow_html=True)
+        if 'grid_n' not in st.session_state or st.session_state.grid_n != n:
+            init_state(n)
 
-    max_obs = n - 2
-    used_obs = len(st.session_state.obstacles)
-    remaining = max_obs - used_obs
+        # 注入路徑格子的動態 CSS（需在 init_state 之後，確保 path 已存在）
+        if 'path' not in st.session_state:
+            st.session_state.path = set()
+        st.markdown(build_path_css(st.session_state.path), unsafe_allow_html=True)
 
-    st.info(
-        f"🎮 **農場小提示**：依序點擊空地設定 **起點 (🚜牽引機)** → **終點 (🏡小屋)** → **障礙物 (🌳樹木)**。\n\n"
-        f"🔲 **樹木種金額度**：還可以種植 {remaining} 棵 （總共最多 {max_obs} 棵）"
-    )
+        max_obs = n - 2
+        used_obs = len(st.session_state.obstacles)
+        remaining = max_obs - used_obs
 
-    # ── 確保每格都有隨機策略箭頭 ──
-    for i in range(n):
-        for j in range(n):
-            if (i, j) not in st.session_state.strategy:
-                st.session_state.strategy[(i, j)] = random.choice(list(ARROWS.values()))
+        st.info(
+            f"🎮 **農場小提示**：依序點擊空地設定 **起點 (🚜牽引機)** → **終點 (🏡小屋)** → **障礙物 (🌳樹木)**。\n\n"
+            f"🔲 **樹木種金額度**：還可以種植 {remaining} 棵 （總共最多 {max_obs} 棵）"
+        )
 
-    # ── 繪製 n×n 格子 ──
-    # 在外層放一個 container 讓它具有獨立背景
-    grid_container = st.container()
-    with grid_container:
+        # ── 確保每格都有隨機策略箭頭 ──
         for i in range(n):
-            cols = st.columns(n, gap="small")
             for j in range(n):
-                with cols[j]:
-                    arrow = st.session_state.strategy.get((i, j), '?')
-                    if (i, j) == st.session_state.start:
-                        label = f"🚜"
-                    elif (i, j) == st.session_state.goal:
-                        label = '🏡'
-                    elif (i, j) in st.session_state.obstacles:
-                        label = '🌳'
-                    else:
-                        if st.session_state.V is not None:
-                            v_val = st.session_state.V[i][j]
-                            p_dir = st.session_state.policy[i][j]
-                            label = f"{ARROWS.get(p_dir,'')}\n{v_val:.2f}"
+                if (i, j) not in st.session_state.strategy:
+                    st.session_state.strategy[(i, j)] = random.choice(list(ARROWS.values()))
+
+        # ── 繪製 n×n 格子 ──
+        grid_container = st.container()
+        with grid_container:
+            for i in range(n):
+                cols = st.columns(n, gap="small")
+                for j in range(n):
+                    with cols[j]:
+                        arrow = st.session_state.strategy.get((i, j), '?')
+                        if (i, j) == st.session_state.start:
+                            label = "🚜"
+                        elif (i, j) == st.session_state.goal:
+                            label = '🏡'
+                        elif (i, j) in st.session_state.obstacles:
+                            label = '🌳'
                         else:
-                            label = f"🌾\n{arrow}"
+                            if st.session_state.V is not None:
+                                v_val = st.session_state.V[i][j]
+                                p_dir = st.session_state.policy[i][j]
+                                label = f"{ARROWS.get(p_dir,'')}\n{v_val:.2f}"
+                            else:
+                                label = f"🌾\n{arrow}"
 
-                    # 使用 on_click 觸發邏輯，能讓畫面重繪更為即時
-                    st.button(label, key=f"cell_{i}_{j}", on_click=handle_click, args=(i, j, max_obs), use_container_width=True)
+                        st.button(label, key=f"cell_{i}_{j}", on_click=handle_click, args=(i, j, max_obs), use_container_width=True)
 
-    st.divider()
+        st.divider()
 
-    # 計算按鈕
-    calc = st.button("✨ 開始導航！(Value Iteration)", key="calc_btn", type="primary", use_container_width=True)
+        # 計算按鈕
+        calc = st.button("✨ 開始導航！(Value Iteration)", key="calc_btn", type="primary", use_container_width=True)
 
-    if calc:
-        if st.session_state.start is None or st.session_state.goal is None:
-            st.error("❌ 哎呀！請先設定好牽引機 (起點) 與小屋 (終點) 喔！")
-        elif st.session_state.start == st.session_state.goal:
-            st.error("❌ 起點與終點不能在同一個地方啦！")
-        else:
-            V, policy = value_iteration(
-                n,
-                st.session_state.goal,
-                st.session_state.obstacles,
-            )
-            st.session_state.V = V
-            st.session_state.policy = policy
-            st.session_state.path = trace_path(
-                st.session_state.start,
-                st.session_state.goal,
-                policy,
-                n,
-                st.session_state.obstacles,
-            )
-            st.rerun()
+        if calc:
+            if st.session_state.start is None or st.session_state.goal is None:
+                st.error("❌ 哎呀！請先設定好牽引機 (起點) 與小屋 (終點) 喔！")
+            elif st.session_state.start == st.session_state.goal:
+                st.error("❌ 起點與終點不能在同一個地方啦！")
+            else:
+                V, policy = value_iteration(
+                    n,
+                    st.session_state.goal,
+                    st.session_state.obstacles,
+                )
+                st.session_state.V = V
+                st.session_state.policy = policy
+                st.session_state.path = trace_path(
+                    st.session_state.start,
+                    st.session_state.goal,
+                    policy,
+                    n,
+                    st.session_state.obstacles,
+                )
+                st.rerun()
 
-    if st.session_state.V is not None:
-        st.success("🎉 太棒了！已經幫你找好回家的路囉！")
+        if st.session_state.V is not None:
+            st.success("🎉 太棒了！已經幫你找好回家的路囉！")
+
+    # ── 右側玩法說明面板 ──
+    with col_guide:
+        st.markdown("""
+<div class="guide-panel">
+  <div class="guide-panel-title">📖 遊戲玩法</div>
+
+  <div class="guide-section">⚙️ 設定地圖</div>
+
+  <div class="guide-step">
+    <span class="step-num">1</span>
+    <span class="step-text">點擊任意空地<br>設定 🚜 <b>起點</b></span>
+  </div>
+  <div class="guide-step">
+    <span class="step-num">2</span>
+    <span class="step-text">點擊另一格空地<br>設定 🏡 <b>終點</b></span>
+  </div>
+  <div class="guide-step">
+    <span class="step-num">3</span>
+    <span class="step-text">繼續點其他空地<br>種下 🌳 <b>障礙物</b><br><small>（最多 n−2 棵）</small></span>
+  </div>
+  <div class="guide-step">
+    <span class="step-num">4</span>
+    <span class="step-text">再次點擊已設格子<br>可 <b>取消</b> 該設定</span>
+  </div>
+
+  <hr class="guide-divider">
+  <div class="guide-section">🧭 開始導航</div>
+
+  <div class="guide-step">
+    <span class="step-num">5</span>
+    <span class="step-text">按下<br>「✨ 開始導航！」<br>計算最佳策略</span>
+  </div>
+  <div class="guide-step">
+    <span class="step-num">6</span>
+    <span class="step-text">每格顯示<br><b>箭頭</b>（方向）<br><b>數字</b>（預期回報）</span>
+  </div>
+  <div class="guide-step">
+    <span class="step-num">7</span>
+    <span class="step-text">沿綠色格子走<br>即是 <b>最短路徑</b>！</span>
+  </div>
+
+  <hr class="guide-divider">
+  <div class="guide-section">🗺️ 圖例</div>
+
+  <div class="legend-row"><span class="legend-icon">🚜</span> 牽引機（起點）</div>
+  <div class="legend-row"><span class="legend-icon">🏡</span> 小屋（終點）</div>
+  <div class="legend-row"><span class="legend-icon">🌳</span> 樹木（障礙物）</div>
+  <div class="legend-row"><span class="legend-icon">🌾</span> 農田（可通行）</div>
+  <div class="legend-row"><span class="legend-icon">↑↓←→</span> 最佳方向</div>
+  <div class="legend-row"><span class="legend-icon">−X.X</span> 預期回報值</div>
+  <div class="legend-row"><span class="legend-icon"><span class="path-badge"></span></span> 最佳路徑格</div>
+</div>
+""", unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
