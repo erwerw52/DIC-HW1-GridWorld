@@ -1,7 +1,5 @@
 import streamlit as st
 import random
-import base64
-from pathlib import Path
 
 ARROWS = {'U': '↑', 'D': '↓', 'L': '←', 'R': '→'}
 ACTIONS = {'U': (-1, 0), 'D': (1, 0), 'L': (0, -1), 'R': (0, 1)}
@@ -44,6 +42,32 @@ def value_iteration(n, goal, obstacles, gamma=0.9, theta=1e-4):
     return V, policy
 
 
+def trace_path(start, goal, policy, n, obstacles):
+    """沿著策略從起點追蹤至終點，回傳路徑格子集合（含起終點）。"""
+    path = []
+    cell = start
+    visited = set()
+    max_steps = n * n
+    while cell != goal and len(path) < max_steps:
+        if cell in visited:
+            break  # 偵測到迴圈，中止
+        visited.add(cell)
+        path.append(cell)
+        i, j = cell
+        action = policy[i][j]
+        if action is None:
+            break
+        di, dj = ACTIONS[action]
+        ni, nj = i + di, j + dj
+        if 0 <= ni < n and 0 <= nj < n and (ni, nj) not in obstacles:
+            cell = (ni, nj)
+        else:
+            break
+    if cell == goal:
+        path.append(goal)
+    return set(path)
+
+
 def init_state(n):
     st.session_state.grid_n = n
     st.session_state.start = None
@@ -52,6 +76,7 @@ def init_state(n):
     st.session_state.strategy = {}
     st.session_state.V = None
     st.session_state.policy = None
+    st.session_state.path = set()
 
 
 def handle_click(i, j, max_obs):
@@ -81,6 +106,7 @@ def handle_click(i, j, max_obs):
         # 重置價值計算與策略
         st.session_state.V = None
         st.session_state.policy = None
+        st.session_state.path = set()
         st.session_state.strategy = {}
 
 
@@ -100,7 +126,7 @@ def build_css():
         aspect-ratio: 1 / 1 !important;
         width: 100% !important;
         height: auto !important;
-        font-size: 22px;
+        font-size: 40px !important;
         font-weight: bold;
         border-radius: 14px;
         border: 2px solid #a3c9a8;
@@ -109,6 +135,12 @@ def build_css():
         transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
         box-shadow: 2px 2px 6px rgba(100,140,80,0.12);
         line-height: 1.4;
+    }
+    [class*="st-key-cell_"] button p {
+        font-size: 32px !important;
+        line-height: 1.2 !important;
+        margin: 0 !important;
+        color: inherit !important;
     }
     [class*="st-key-cell_"] button:hover {
         transform: scale(1.08) rotate(1deg);
@@ -155,6 +187,35 @@ def build_css():
     </style>
     """
 
+def build_path_css(path):
+    """為路徑中的每個格子動態生成綠色背景 CSS，確保與白色文字對比良好。"""
+    if not path:
+        return ""
+    rules = []
+    for (i, j) in path:
+        rules.append(f"""
+    [class*="st-key-cell_{i}_{j}"] button {{
+        background-color: #7cfc00 !important;
+        border-color: #081c15 !important;
+        color: #1a3a00 !important;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        box-shadow: 0 0 14px rgba(27,67,50,0.65) !important;
+    }}
+    [class*="st-key-cell_{i}_{j}"] button p {{
+        color: #1a3a00 !important;
+    }}
+    [class*="st-key-cell_{i}_{j}"] button:hover {{
+        background-color: #2d6a4f !important;
+        border-color: #081c15 !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 18px rgba(45,106,79,0.8) !important;
+    }}
+    [class*="st-key-cell_{i}_{j}"] button:hover p {{
+        color: #ffffff !important;
+    }}""")
+    return f"<style>{''.join(rules)}</style>"
+
+
 def main():
     st.set_page_config(page_title="Happy Farm Strategy", page_icon="🌻", layout="centered")
     st.markdown(build_css(), unsafe_allow_html=True)
@@ -166,6 +227,11 @@ def main():
 
     if 'grid_n' not in st.session_state or st.session_state.grid_n != n:
         init_state(n)
+
+    # 注入路徑格子的動態 CSS（需在 init_state 之後，確保 path 已存在）
+    if 'path' not in st.session_state:
+        st.session_state.path = set()
+    st.markdown(build_path_css(st.session_state.path), unsafe_allow_html=True)
 
     max_obs = n - 2
     used_obs = len(st.session_state.obstacles)
@@ -226,6 +292,13 @@ def main():
             )
             st.session_state.V = V
             st.session_state.policy = policy
+            st.session_state.path = trace_path(
+                st.session_state.start,
+                st.session_state.goal,
+                policy,
+                n,
+                st.session_state.obstacles,
+            )
             st.rerun()
 
     if st.session_state.V is not None:
