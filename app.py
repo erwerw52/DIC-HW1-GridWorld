@@ -195,6 +195,26 @@ def build_css():
         color: #5c4a3d !important;
     }
 
+    /* ── Reset 按鈕 ── */
+    [class*="st-key-reset_btn"] button {
+        width: 50% !important;
+        height: 44px !important;
+        font-size: 15px !important;
+        font-weight: bold;
+        border-radius: 10px;
+        background-color: #ffffff !important;
+        border: 2px solid #c0392b !important;
+        color: #c0392b !important;
+        transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+    }
+    [class*="st-key-reset_btn"] button:hover {
+        background-color: #fff0ee !important;
+        border-color: #96281b !important;
+        color: #96281b !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(192, 57, 43, 0.25);
+    }
+
     /* ── 右側玩法說明面板 ── */
     .guide-panel {
         background: linear-gradient(160deg, #fffdf5 0%, #f5f0e8 100%);
@@ -366,8 +386,16 @@ def main():
 
         st.divider()
 
-        # 計算按鈕
-        calc = st.button("✨ 開始導航！(Value Iteration)", key="calc_btn", type="primary", use_container_width=True)
+        # 計算按鈕 + Reset 按鈕
+        btn_col1, btn_col2 = st.columns([3, 1], gap="small")
+        with btn_col1:
+            calc = st.button("✨ 開始導航！(Value Iteration)", key="calc_btn", type="primary", use_container_width=True)
+        with btn_col2:
+            reset = st.button("🔄 重置格子內容", key="reset_btn", use_container_width=True)
+
+        if reset:
+            init_state(n)
+            st.rerun()
 
         if calc:
             if st.session_state.start is None or st.session_state.goal is None:
